@@ -1,13 +1,19 @@
-import React from "react";
-import { withFormik, Form, Field } from "formik";
+import React, {useState, useEffect} from "react";
+import { withFormik, Form, Field, ErrorMessage } from "formik";
 import * as yup from "yup";
 import axios from "axios";
 
 
 
 
-function LoginForm({ values, errors, touched }) {
-    
+function LoginForm({ values, errors, status, touched }) {
+    const [data, setData] = useState([]);
+
+    useEffect(() => {
+        if (status) {
+            setData([...data, status])
+        }
+    }, [status])
   
     return (
         <Form>
@@ -41,34 +47,29 @@ function LoginForm({ values, errors, touched }) {
               name="terms" 
               checked={values.terms}
               />
-              Accept Term of Service
+              Accept Terms of Service
           </label>
-          <button>Submit!</button>
+
+          <button type="button">Submit!</button>
         </Form>
     );
 }
 
 
-const FormikForm = withFormik({
-
-
-    mapPropsToValues({ name, email, password, terms }) {
+export default withFormik({
+    mapPropsToValues(values) {
       return {
-        name: name || "",
-        email: email || "",
-        password: password || "",
-        terms: terms || false
+        name: values.name || "",
+        email: values.email || "",
+        password: values.password || "",
+        terms: values.terms || false
       };
-  
     },
-
 
     validationSchema: yup.object().shape({
         name: yup.string()
-          .name()
           .required("Your Name is required"),
         email: yup.string()
-          .email()
           .required("Email is required"),
         password: yup.string()
           .min(8, "Password must be 8 characters or longer")
@@ -78,27 +79,16 @@ const FormikForm = withFormik({
     }),
 
 
-    handleSubmit(values, { resetForm, setErrors, setSubmitting}) {
+    handleSubmit(values, { setStatus }) {
         console.log(values)
-
-        if (values.email === "alreadytaken@atb.dev") {
-            setErrors({ email: "That email is already taken"});
-        } else {
             axios
             .post("https://reqres.in/api/users", values)
             .then(response => {
                 console.log(response);
-                resetForm();
-                setSubmitting(false);
+                setStatus(response.data);
             })
             .catch(err => {
-                console.log(err);
-                setSubmitting(false);
+                console.log("Error: ", err);
             });
-        }
-    }
-        
+        }        
     })(LoginForm);
-
-
-export default LoginForm;

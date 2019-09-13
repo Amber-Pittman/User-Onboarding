@@ -1,6 +1,7 @@
-mport React from "react";
+import React from "react";
 import { withFormik, Form, Field } from "formik";
-import * as Yup from "yup";
+import * as yup from "yup";
+import axios from "axios";
 
 
 
@@ -62,27 +63,42 @@ const FormikForm = withFormik({
     },
 
 
-    validationSchema: Yup.object().shape({
-        name: Yup.string()
+    validationSchema: yup.object().shape({
+        name: yup.string()
           .name()
           .required("Your Name is required"),
-        email: Yup.string()
+        email: yup.string()
           .email()
           .required("Email is required"),
-        password: Yup.string()
+        password: yup.string()
           .min(8, "Password must be 8 characters or longer")
           .required("Password is required"),
-        terms: Yup.boolean()
+        terms: yup.boolean()
           .oneOf([true], "Must agree to Terms of Service")
-    })
+    }),
 
 
-    handleSubmit(values) {
+    handleSubmit(values, { resetForm, setErrors, setSubmitting}) {
         console.log(values)
+
+        if (values.email === "alreadytaken@atb.dev") {
+            setErrors({ email: "That email is already taken"});
+        } else {
+            axios
+            .post("https://reqres.in/api/users", values)
+            .then(response => {
+                console.log(response);
+                resetForm();
+                setSubmitting(false);
+            })
+            .catch(err => {
+                console.log(err);
+                setSubmitting(false);
+            });
+        }
     }
-
-
-    )(LoginForm);
+        
+    })(LoginForm);
 
 
 export default LoginForm;
